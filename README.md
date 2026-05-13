@@ -1,56 +1,68 @@
 # 🧟 Zombie Survival Game
 
-A browser-based zombie survival shooter built with pure HTML5 Canvas and vanilla JavaScript. **No external dependencies** — works completely offline!
+A clean, self-contained browser-based zombie survival shooter built with **pure HTML5 Canvas + Vanilla JavaScript**.
+
+**No external dependencies.** Works offline. Easy to run on GitHub Pages.
+
+## ✨ Current Features
+- Predetermined number of zombies per wave
+- Must clear **every zombie** before the next wave starts
+- Health orbs with reduced drop rate
+- 5-second wave breaks with full-screen indicator
+- Simple Web Audio sounds (shoot, kill, wave complete)
+- Smooth controls + particle effects
+- Progressive difficulty
 
 ## 🎮 How to Play
+- **WASD / Arrows** — Move
+- **Mouse** — Aim
+- **Click / Hold** — Shoot
+- Clear all zombies in a wave to trigger the break and advance
 
-- **Move**: WASD or Arrow Keys
-- **Aim**: Move your mouse cursor
-- **Shoot**: Left mouse click (supports rapid fire with cooldown)
-- **Goal**: Survive as many waves as possible!
+## 🚀 Play Now
+**Live Demo:** https://medicinalboca.github.io/zombie-survival-game/
 
-Zombies spawn from the edges and chase you. Avoid contact or you'll lose health. Shoot them before they reach you!
+## 🛠️ Run Locally
+Just open `index.html` in any modern browser.
 
-## ✨ Features
-- Endless procedurally increasing waves
-- Smooth top-down gameplay
-- Particle death effects
-- Health, score, and wave tracking
-- Clean modern UI
-- Fully self-contained single file
+## 🌍 Using Public GitHub & Open Resources
 
-## 🚀 Run It
+This project was built to be **easy to extend with public resources** from GitHub.
 
-### Locally
-Open `index.html` in Chrome, Firefox, Edge, or any modern browser.
+### Recommended Public Resources
 
-### GitHub Pages (Recommended)
-1. Go to your repo **Settings** → **Pages**
-2. Under "Build and deployment", set Source to **Deploy from a branch**
-3. Branch: `main`, Folder: `/ (root)`
-4. Save
-5. Wait ~1 minute and visit: `https://medicinalboca.github.io/zombie-survival-game/`
+**Open Source Games (Inspiration & Code Patterns):**
+- [mo0hamedRadwan/Zombie-Game](https://github.com/mo0hamedRadwan/Zombie-Game) — Another clean HTML5 Canvas zombie shooter
+- [natgarea/ironrun-z](https://github.com/natgarea/ironrun-z) — Zombie running game example
+- Search GitHub for `zombie-survival-shooter` or `html5 canvas zombie`
 
-Your game is now live on the internet!
+**Pixel Art & Sprites (Free / Public Domain style):**
+- Craftpix Free Urban Zombie Sprite Sheet (itch.io)
+- Search GitHub + itch.io for "pixel zombie" or "top down zombie tileset"
+- Many creators release CC0 / MIT pixel art on GitHub
 
-## 🌍 Built Using Public Resources via GitHub
-This project was created using open web standards. All code and visuals are original/procedurally generated. 
+**How to Enhance This Game**
+1. Fork this repo
+2. Replace the procedural drawing code with sprite sheets from public repos
+3. Add real sound files (base64 or Git LFS)
+4. Improve UI with Tailwind or custom CSS
+5. Add power-ups, different weapons, or boss waves
 
-You can easily enhance it with **public domain or open-source assets** from GitHub:
-- Search repositories for "pixel zombie art"
-- "free game sprites github"
-- "top down zombie tileset"
+**Web Audio API sounds** in this game follow patterns commonly used in open-source HTML5 games on GitHub.
 
-Fork the repo, add better graphics/sounds, and submit a PR!
+## 📦 Tech Stack
+- HTML5 Canvas
+- Vanilla JavaScript
+- Web Audio API (for sounds)
+- Tailwind CSS (via CDN for UI)
 
-## 🛠️ Roadmap / Ideas
-- [ ] Add sound effects (free public domain)
-- [ ] Weapon upgrades & power-ups
-- [ ] Different zombie types
-- [ ] High score persistence
-- [ ] Touch/mobile controls
-- [ ] Better visuals / animations
+## 🗺️ Future Ideas
+- Replace procedural graphics with public pixel art sprites
+- Add more sound variety
+- Power-ups and different zombie types
+- Mobile touch support
+- Leaderboard (localStorage or Supabase)
 
-Survive the apocalypse! 🧟
+Contributions and forks welcome! Feel free to use any public GitHub resources to make it better.
 
-Made with ❤️ using GitHub connected tools.
+Made with ❤️ using GitHub connected tools and open web standards.
