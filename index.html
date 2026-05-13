@@ -42,7 +42,7 @@
                 <h1 class="text-5xl font-bold retro-font tracking-wider -mt-2">SURVIVAL</h1>
             </div>
             <div class="text-right">
-                <div class="text-sm text-gray-400">Improved wave flow + Health Orbs</div>
+                <div class="text-sm text-gray-400">Predetermined zombies per wave + reduced orb drops</div>
                 <div class="text-xs text-gray-500">Pure HTML5 + JS • GitHub</div>
             </div>
         </div>
@@ -98,13 +98,13 @@
                 </div>
 
                 <div class="bg-gray-800 border border-gray-700 rounded-2xl p-5 text-xs text-gray-400">
-                    <strong class="text-emerald-400">NEW:</strong> Health orbs drop from zombies. Clear waves for short breaks + big wave announcements!
+                    <strong class="text-emerald-400">NEW:</strong> Each wave has a fixed number of zombies. Orb drop rate reduced.
                 </div>
             </div>
         </div>
 
         <div class="mt-6 text-center text-xs text-gray-500">
-            Built with GitHub • Wave 5+ improvements applied
+            Built with GitHub • Structured waves enabled
         </div>
     </div>
 
@@ -136,9 +136,7 @@
     </div>
 
     <script>
-        function initializeTailwind() {
-            // Tailwind ready
-        }
+        function initializeTailwind() {}
 
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
@@ -147,7 +145,7 @@
         let zombies = [];
         let bullets = [];
         let particles = [];
-        let orbs = [];                    // NEW: Health orbs
+        let orbs = [];
 
         let score = 0;
         let zombiesKilled = 0;
@@ -157,15 +155,15 @@
         let keys = {};
         let mouse = { x: 400, y: 300 };
         let lastShotTime = 0;
-        let fireCooldown = 160;
+        let fireCooldown = 155;
 
         let lastZombieSpawn = 0;
-        let zombieSpawnInterval = 1150;
-        let zombiesPerWave = 7;
+        let zombieSpawnInterval = 1100;
+        let zombiesPerWave = 7;              // base
         let waveZombiesSpawned = 0;
-        let zombiesKilledThisWave = 0;   // NEW: For clear wave completion
+        let zombiesKilledThisWave = 0;
+        let zombiesToSpawnThisWave = 0;      // NEW: Predetermined per wave
 
-        // NEW: Wave break system
         let isWaveBreak = false;
         let waveBreakEndTime = 0;
 
@@ -203,16 +201,14 @@
             const dx = mouse.x - player.x;
             const dy = mouse.y - player.y;
             const dist = Math.hypot(dx, dy) || 1;
-            const bulletSpeed = 7.5;
 
             bullets.push({
                 x: player.x, y: player.y,
-                vx: (dx / dist) * bulletSpeed,
-                vy: (dy / dist) * bulletSpeed,
+                vx: (dx / dist) * 7.5,
+                vy: (dy / dist) * 7.5,
                 radius: 5, life: 55
             });
 
-            // Muzzle flash
             for (let i = 0; i < 6; i++) {
                 particles.push({
                     x: player.x, y: player.y,
@@ -232,7 +228,7 @@
             if (keys['a'] || keys['arrowleft']) dx -= 1;
             if (keys['d'] || keys['arrowright']) dx += 1;
 
-            if (dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
+            if (dx && dy) { dx *= 0.707; dy *= 0.707; }
 
             player.x += dx * player.speed;
             player.y += dy * player.speed;
@@ -249,12 +245,12 @@
             else if (side === 2) { x = Math.random() * canvas.width; y = canvas.height + 35; }
             else { x = -35; y = Math.random() * canvas.height; }
 
-            const baseSpeed = 1.15 + (wave - 1) * 0.18;
+            const baseSpeed = 1.2 + (wave - 1) * 0.17;
             zombies.push({
                 x, y, radius: 14,
-                health: 28 + wave * 6,
-                speed: baseSpeed + Math.random() * 0.35,
-                maxHealth: 28 + wave * 6
+                health: 30 + wave * 5.5,
+                speed: baseSpeed + Math.random() * 0.3,
+                maxHealth: 30 + wave * 5.5
             });
             waveZombiesSpawned++;
         }
@@ -269,12 +265,11 @@
                 z.x += (dx / dist) * z.speed;
                 z.y += (dy / dist) * z.speed;
 
-                const pDist = Math.hypot(z.x - player.x, z.y - player.y);
-                if (pDist < z.radius + player.radius - 2) {
-                    player.health -= 0.9;
+                if (Math.hypot(z.x - player.x, z.y - player.y) < z.radius + player.radius - 2) {
+                    player.health -= 0.85;
                     if (player.health <= 0) { player.health = 0; endGame(); }
 
-                    const knock = 3;
+                    const knock = 2.8;
                     z.x -= (dx / dist) * knock;
                     z.y -= (dy / dist) * knock;
                 }
@@ -284,48 +279,33 @@
         function updateBullets() {
             for (let i = bullets.length - 1; i >= 0; i--) {
                 const b = bullets[i];
-                b.x += b.vx; b.y += b.vy; b.life--;
+                b.x += b.vx;
+                b.y += b.vy;
+                b.life--;
 
                 if (b.life <= 0) { bullets.splice(i, 1); continue; }
 
                 for (let j = zombies.length - 1; j >= 0; j--) {
                     const z = zombies[j];
                     if (Math.hypot(b.x - z.x, b.y - z.y) < b.radius + z.radius) {
-                        z.health -= 26;
+                        z.health -= 25;
                         bullets.splice(i, 1);
 
-                        // Hit particles
-                        for (let k = 0; k < 7; k++) {
-                            particles.push({
-                                x: b.x, y: b.y,
-                                vx: (Math.random()-0.5)*4.5,
-                                vy: (Math.random()-0.5)*4.5,
-                                radius: Math.random()*2.8 + 1,
-                                life: 18 + Math.random()*8,
-                                color: '#ef4444'
-                            });
+                        for (let k = 0; k < 6; k++) {
+                            particles.push({ x: b.x, y: b.y, vx: (Math.random()-0.5)*4.2, vy: (Math.random()-0.5)*4.2, radius: Math.random()*2.5+1, life: 17, color: '#ef4444' });
                         }
 
                         if (z.health <= 0) {
-                            // Death explosion + chance for HEALTH ORB
-                            for (let k = 0; k < 16; k++) {
-                                particles.push({
-                                    x: z.x, y: z.y,
-                                    vx: (Math.random()-0.5)*5.5,
-                                    vy: (Math.random()-0.5)*5.5,
-                                    radius: Math.random()*3.2 + 1.5,
-                                    life: 22 + Math.random()*12,
-                                    color: '#b91c1c'
-                                });
+                            for (let k = 0; k < 15; k++) {
+                                particles.push({ x: z.x, y: z.y, vx: (Math.random()-0.5)*5.2, vy: (Math.random()-0.5)*5.2, radius: Math.random()*3+1.5, life: 20, color: '#b91c1c' });
                             }
 
-                            // === HEALTH ORB DROP (reliable RNG via Math.random) ===
-                            if (Math.random() < 0.28) {
+                            // Health orb drop - REDUCED by 25%
+                            if (Math.random() < 0.21) {
                                 orbs.push({
-                                    x: z.x,
-                                    y: z.y,
+                                    x: z.x, y: z.y,
                                     radius: 11,
-                                    value: 20 + Math.floor(Math.random() * 8)
+                                    value: 20 + Math.floor(Math.random() * 7)
                                 });
                             }
 
@@ -345,29 +325,19 @@
             for (let i = particles.length - 1; i >= 0; i--) {
                 const p = particles[i];
                 p.x += p.vx; p.y += p.vy; p.life--;
-                p.vx *= 0.95; p.vy *= 0.95;
+                p.vx *= 0.94; p.vy *= 0.94;
                 if (p.life <= 0) particles.splice(i, 1);
             }
         }
 
-        // NEW: Health orbs collection
         function updateOrbs() {
             for (let i = orbs.length - 1; i >= 0; i--) {
                 const orb = orbs[i];
-                const dist = Math.hypot(orb.x - player.x, orb.y - player.y);
-
-                if (dist < orb.radius + player.radius + 8) {
+                if (Math.hypot(orb.x - player.x, orb.y - player.y) < orb.radius + player.radius + 6) {
                     player.health = Math.min(player.maxHealth, player.health + orb.value);
 
-                    for (let k = 0; k < 12; k++) {
-                        particles.push({
-                            x: orb.x, y: orb.y,
-                            vx: (Math.random() - 0.5) * 3.2,
-                            vy: (Math.random() - 0.5) * 3.2,
-                            radius: 2 + Math.random() * 2.5,
-                            life: 16 + Math.random() * 10,
-                            color: '#22c55e'
-                        });
+                    for (let k = 0; k < 10; k++) {
+                        particles.push({ x: orb.x, y: orb.y, vx: (Math.random()-0.5)*3, vy: (Math.random()-0.5)*3, radius: 2+Math.random()*2, life: 15, color: '#22c55e' });
                     }
                     orbs.splice(i, 1);
                     updateUI();
@@ -382,30 +352,37 @@
                 if (now >= waveBreakEndTime) {
                     isWaveBreak = false;
                     wave++;
+
+                    // Fresh predetermined count for the new wave
+                    zombiesToSpawnThisWave = Math.floor(6 + wave * 2.5);
                     waveZombiesSpawned = 0;
                     zombiesKilledThisWave = 0;
 
-                    zombieSpawnInterval = Math.max(380, zombieSpawnInterval - 65);
-                    zombiesPerWave = Math.floor(zombiesPerWave * 1.18) + 2;
+                    zombieSpawnInterval = Math.max(360, zombieSpawnInterval - 55);
 
-                    for (let i = 0; i < 5; i++) {
+                    // Spawn the first few of the new wave
+                    for (let i = 0; i < 4; i++) {
                         setTimeout(() => {
-                            if (gameState === 'playing' && !isWaveBreak) spawnZombie();
-                        }, i * 220);
+                            if (gameState === 'playing' && !isWaveBreak && waveZombiesSpawned < zombiesToSpawnThisWave) {
+                                spawnZombie();
+                            }
+                        }, i * 200);
                     }
                     updateUI();
                 }
                 return;
             }
 
-            if (!isWaveBreak && now - lastZombieSpawn > zombieSpawnInterval && zombies.length < 28) {
+            // Only spawn if we haven't reached the predetermined limit for this wave
+            if (!isWaveBreak && waveZombiesSpawned < zombiesToSpawnThisWave && now - lastZombieSpawn > zombieSpawnInterval && zombies.length < 26) {
                 spawnZombie();
                 lastZombieSpawn = now;
             }
 
-            if (!isWaveBreak && zombiesKilledThisWave >= zombiesPerWave) {
+            // Wave complete when we've killed the predetermined amount
+            if (!isWaveBreak && zombiesKilledThisWave >= zombiesToSpawnThisWave) {
                 isWaveBreak = true;
-                waveBreakEndTime = now + 5000; // 5 second break
+                waveBreakEndTime = now + 5000; // 5 seconds
             }
         }
 
@@ -436,15 +413,12 @@
             ctx.fillStyle = '#fde047';
             for (const b of bullets) {
                 ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = 'rgba(253,224,71,0.35)';
-                ctx.beginPath(); ctx.arc(b.x - b.vx*1.8, b.y - b.vy*1.8, b.radius*0.65, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#fde047';
             }
 
             // Health Orbs
             for (const orb of orbs) {
                 ctx.shadowColor = '#22c55e';
-                ctx.shadowBlur = 14;
+                ctx.shadowBlur = 12;
                 ctx.fillStyle = '#4ade80';
                 ctx.beginPath(); ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI*2); ctx.fill();
                 ctx.shadowBlur = 0;
@@ -453,7 +427,7 @@
                 ctx.beginPath(); ctx.arc(orb.x, orb.y, orb.radius * 0.55, 0, Math.PI*2); ctx.fill();
 
                 ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2.5;
+                ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.moveTo(orb.x-5, orb.y); ctx.lineTo(orb.x+5, orb.y);
                 ctx.moveTo(orb.x, orb.y-5); ctx.lineTo(orb.x, orb.y+5);
@@ -464,19 +438,19 @@
                 ctx.fillStyle = '#b91c1c';
                 ctx.beginPath(); ctx.arc(z.x, z.y, z.radius, 0, Math.PI*2); ctx.fill();
                 ctx.fillStyle = '#7f1d1d';
-                ctx.beginPath(); ctx.arc(z.x, z.y-4, z.radius*0.6, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(z.x, z.y-4, z.radius*0.55, 0, Math.PI*2); ctx.fill();
 
                 if (z.health < z.maxHealth) {
                     const hpPct = Math.max(0, z.health / z.maxHealth);
                     ctx.fillStyle = '#111827';
-                    ctx.fillRect(z.x-12, z.y - z.radius - 11, 24, 4);
-                    ctx.fillStyle = (hpPct > 0.5) ? '#22c55e' : '#ef4444';
-                    ctx.fillRect(z.x-12, z.y - z.radius - 11, 24 * hpPct, 4);
+                    ctx.fillRect(z.x-12, z.y - z.radius - 10, 24, 4);
+                    ctx.fillStyle = hpPct > 0.5 ? '#22c55e' : '#ef4444';
+                    ctx.fillRect(z.x-12, z.y - z.radius - 10, 24 * hpPct, 4);
                 }
             }
 
-            ctx.fillStyle = 'rgba(0,0,0,0.35)';
-            ctx.beginPath(); ctx.ellipse(player.x+5, player.y+9, player.radius*0.85, player.radius*0.45, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath(); ctx.ellipse(player.x+4, player.y+8, player.radius*0.8, player.radius*0.4, 0, 0, Math.PI*2); ctx.fill();
 
             ctx.fillStyle = '#3b82f6';
             ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI*2); ctx.fill();
@@ -486,68 +460,68 @@
             ctx.lineWidth = 5;
             ctx.beginPath();
             ctx.moveTo(player.x, player.y);
-            ctx.lineTo(player.x + Math.cos(angle)*30, player.y + Math.sin(angle)*30);
+            ctx.lineTo(player.x + Math.cos(angle)*28, player.y + Math.sin(angle)*28);
             ctx.stroke();
 
             ctx.fillStyle = '#1e40af';
-            ctx.beginPath(); ctx.arc(player.x, player.y, player.radius*0.52, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(player.x, player.y, player.radius*0.5, 0, Math.PI*2); ctx.fill();
 
             for (const p of particles) {
-                ctx.globalAlpha = Math.max(0.15, p.life / 28);
+                ctx.globalAlpha = Math.max(0.12, p.life / 26);
                 ctx.fillStyle = p.color || '#ef4444';
                 ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2); ctx.fill();
             }
             ctx.globalAlpha = 1;
 
             if (gameState === 'playing' && !isWaveBreak) {
-                ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+                ctx.strokeStyle = 'rgba(255,255,255,0.5)';
                 ctx.lineWidth = 1.5;
-                ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 13, 0, Math.PI*2); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(mouse.x-20, mouse.y); ctx.lineTo(mouse.x+20, mouse.y); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(mouse.x, mouse.y-20); ctx.lineTo(mouse.x, mouse.y+20); ctx.stroke();
+                ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 12, 0, Math.PI*2); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(mouse.x-18, mouse.y); ctx.lineTo(mouse.x+18, mouse.y); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(mouse.x, mouse.y-18); ctx.lineTo(mouse.x, mouse.y+18); ctx.stroke();
             }
 
-            // FULL SCREEN WAVE BREAK INDICATOR
+            // Wave Break Screen
             if (isWaveBreak && gameState === 'playing') {
-                const remainingSec = Math.max(0, Math.ceil((waveBreakEndTime - Date.now()) / 1000));
+                const remaining = Math.max(0, Math.ceil((waveBreakEndTime - Date.now()) / 1000));
 
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                 ctx.fillStyle = '#fff';
-                ctx.font = 'bold 52px "Press Start 2P", system-ui';
+                ctx.font = 'bold 50px "Press Start 2P", system-ui';
                 ctx.textAlign = 'center';
-                ctx.fillText('WAVE COMPLETE', canvas.width/2, canvas.height/2 - 55);
+                ctx.fillText('WAVE COMPLETE', canvas.width/2, canvas.height/2 - 50);
 
-                ctx.font = 'bold 26px system-ui';
+                ctx.font = 'bold 24px system-ui';
                 ctx.fillStyle = '#4ade80';
-                ctx.fillText(`PREPARING WAVE ${wave + 1}`, canvas.width/2, canvas.height/2 + 5);
+                ctx.fillText(`WAVE ${wave + 1} — ${zombiesToSpawnThisWave} ZOMBIES`, canvas.width/2, canvas.height/2 + 5);
 
-                ctx.font = '22px system-ui';
+                ctx.font = '20px system-ui';
                 ctx.fillStyle = '#e0e7ff';
-                ctx.fillText(`Starting in ${remainingSec} seconds...`, canvas.width/2, canvas.height/2 + 45);
+                ctx.fillText(`Starting in ${remaining} seconds...`, canvas.width/2, canvas.height/2 + 42);
 
-                ctx.font = '15px system-ui';
+                ctx.font = '14px system-ui';
                 ctx.fillStyle = '#64748b';
-                ctx.fillText('Collect any health orbs on the ground!', canvas.width/2, canvas.height/2 + 85);
+                ctx.fillText('Collect health orbs while you wait', canvas.width/2, canvas.height/2 + 78);
             }
 
             if (gameState === 'start') {
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.78)';
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                 ctx.fillStyle = '#fff';
-                ctx.font = 'bold 46px "Press Start 2P", system-ui';
+                ctx.font = 'bold 44px "Press Start 2P", system-ui';
                 ctx.textAlign = 'center';
-                ctx.fillText('ZOMBIE SURVIVAL', canvas.width/2, 210);
+                ctx.fillText('ZOMBIE SURVIVAL', canvas.width/2, 205);
 
-                ctx.font = '18px system-ui';
+                ctx.font = '17px system-ui';
                 ctx.fillStyle = '#94a3b8';
-                ctx.fillText('Click or press SPACE to begin', canvas.width/2, 265);
+                ctx.fillText('Click or press SPACE to start', canvas.width/2, 260);
 
-                ctx.font = '15px system-ui';
-                ctx.fillText('WASD = Move   •   Mouse = Aim   •   Click/Hold = Shoot', canvas.width/2, 310);
-                ctx.fillText('Clear waves for breaks + collect green health orbs!', canvas.width/2, 340);
+                ctx.font = '14px system-ui';
+                ctx.fillText('Each wave has a fixed number of zombies', canvas.width/2, 305);
+                ctx.fillText('WASD • Mouse Aim • Click to Shoot', canvas.width/2, 335);
             }
         }
 
@@ -555,7 +529,6 @@
             if (gameState !== 'playing') return;
 
             updatePlayer();
-
             if (isMouseDown && !isWaveBreak) shoot();
 
             if (!isWaveBreak) {
@@ -567,8 +540,7 @@
             updateOrbs();
             handleWaveProgress();
 
-            if (frame % 6 === 0) updateUI();
-
+            if (frame % 5 === 0) updateUI();
             if (player.health <= 0) endGame();
 
             frame++;
@@ -599,20 +571,26 @@
             score = 0;
             zombiesKilled = 0;
             wave = 1;
+
             waveZombiesSpawned = 0;
             zombiesKilledThisWave = 0;
+
+            // Set predetermined zombies for wave 1
+            zombiesToSpawnThisWave = Math.floor(6 + wave * 2.5);
 
             isWaveBreak = false;
             waveBreakEndTime = 0;
 
-            zombieSpawnInterval = 1150;
-            zombiesPerWave = 7;
+            zombieSpawnInterval = 1100;
 
             lastShotTime = 0;
             isMouseDown = false;
 
-            for (let i = 0; i < 4; i++) {
-                setTimeout(() => { if (gameState === 'playing') spawnZombie(); }, i * 280);
+            // Spawn first few
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    if (gameState === 'playing' && waveZombiesSpawned < zombiesToSpawnThisWave) spawnZombie();
+                }, i * 260);
             }
         }
 
@@ -641,15 +619,13 @@
 
             setTimeout(() => {
                 if (gameState === 'start') {
-                    for (let i = 0; i < 3; i++) {
-                        const x = (i % 2 === 0) ? -25 : canvas.width + 25;
-                        const y = 150 + i * 120;
-                        zombies.push({ x, y, radius: 14, health: 30, speed: 0.9, maxHealth: 30 });
+                    for (let i = 0; i < 2; i++) {
+                        zombies.push({ x: (i===0 ? -30 : canvas.width+30), y: 200 + i*150, radius: 14, health: 30, speed: 0.95, maxHealth: 30 });
                     }
                 }
-            }, 900);
+            }, 850);
 
-            console.log('%c[Zombie Survival] Updated with health orbs + wave breaks. Ready!', 'color:#64748b');
+            console.log('%c[Zombie Survival] Structured waves + reduced orb drops active.', 'color:#64748b');
         }
 
         window.onload = init;
